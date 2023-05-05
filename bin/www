@@ -1,0 +1,93 @@
+#!/usr/bin/env node
+
+// ? Node modules.
+const consoleDebug = require("debug")("console");
+const http = require("http");
+const path = require("path");
+
+// ? Global crypto secret key.
+global.cryptoSecretkey =
+  "Bismillahirrahmanirrahîm. Sübhânekellâhümme ve bi hamdik ve tebârakesmük ve teâlâ ceddük ve lâ ilâhe ğayrük.";
+
+// ? Environments.
+const { NODE_ENV } = process.env;
+
+// ? Error hatalarını debug yönlendirmesi.
+["log", "info", "warn", "error"].forEach(function (consoleKey) {
+  console[consoleKey] = (...consolePayload) => {
+    consoleDebug(String(`- ${consoleKey} -`).toUpperCase(), ...consolePayload);
+  };
+});
+
+let envAddress = ".env"; // ? Varsayılan env dosyası.
+
+// ? Server tipine göre environment'ları iceri alma.
+switch (NODE_ENV) {
+  case "production":
+    envAddress = ".env.production";
+    break;
+  case "test":
+    envAddress = ".env.test";
+    break;
+  default:
+}
+
+// ? Server tipine göre env datalarının yükleme.
+require("dotenv").config({ path: path.join(__dirname, "../", envAddress) });
+
+// ? Express application.
+const app = require("../app");
+
+// ? Environments.
+const { PORT, HOSTNAME } = process.env;
+
+// ? Get port from environment and store in Expresstrue.
+const port = normalizePort(PORT || "3000");
+
+// ? App set.
+app.set("port", port);
+app.set("env", NODE_ENV);
+app.set("host", HOSTNAME);
+
+// ? Normalize a port into a number, string, or false.
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    return val;
+  }
+
+  if (port >= 0) {
+    return port;
+  }
+
+  return false;
+}
+
+// ? Event listener for HTTP server "error" event.
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+process.on("uncaughtException", (err) => {
+  console.error("PROCESS:uncaughtException", `Error: ${err?.message}`);
+});
+
+process.on("unhandledRejection", (reason, promise) => {});

@@ -1,0 +1,44 @@
+{
+  "name": "wuubi-backend",
+  "version": "1.0.0",
+  "description": "Wuubi Social Media App Backend Service",
+  "main": "index.js",
+  "scripts": {
+    "start:test": "NODE_ENV=test DEBUG=*,-nodemon*,-express:router*,-body-parser*,-node-soap,-follow-redirects nodemon ./bin/www",
+    "start:prod": "NODE_ENV=production DEBUG=*,-nodemon*,-express:router*,-body-parser*,-node-soap,-follow-redirects nodemon ./bin/www",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "port:kill": "sudo kill -9 $(sudo lsof -t -i tcp:3000)"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/highpriv/wuubi-backend.git"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "social",
+    "media",
+    "app",
+    "backend"
+  ],
+  "author": "Canberk Beren",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/highpriv/wuubi-backend/issues"
+  },
+  "homepage": "https://github.com/highpriv/wuubi-backend#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^6.1.5",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.1.0",
+    "nodemon": "^2.0.22",
+    "socket.io": "^4.6.1"
+  }
+}
