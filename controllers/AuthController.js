@@ -41,7 +41,14 @@ const controller = {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
-      res.json({ token });
+      res
+        .status(200)
+        .json({
+          token,
+          name: user.name,
+          lastname: user.lastname,
+          username: user.username,
+        });
     } catch (err) {
       console.log(err.message);
       res.status(401).send({
@@ -68,7 +75,13 @@ const controller = {
       await user.save();
 
       const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-      res.send({ token });
+      res.status(200).json({
+        token,
+        user: {
+          name: user.name,
+          lastname: user.lastname,
+        },
+      });
     } catch (err) {
       console.log(err.message);
       res.status(401).send({
