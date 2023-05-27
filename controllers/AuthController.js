@@ -41,17 +41,16 @@ const controller = {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
-      res
-        .status(200)
-        .json({
-          token,
-          name: user.name,
-          lastname: user.lastname,
-          username: user.username,
-        });
+      res.status(200).json({
+        token,
+        name: user.name,
+        lastname: user.lastname,
+        username: user.username,
+      });
     } catch (err) {
       console.log(err.message);
       res.status(401).send({
+        token: null,
         message: "An error occured!",
       });
     }
