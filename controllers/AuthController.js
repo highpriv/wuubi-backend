@@ -6,9 +6,7 @@ const controller = {
   async login(req, res, next) {
     try {
       const { email, username, password } = req.body;
-      console.log("email", email);
       const user = await User.findOne({ $or: [{ email }, { username }] });
-      console.log("user", user);
       let errorMessages = [
         {
           check: !password,
