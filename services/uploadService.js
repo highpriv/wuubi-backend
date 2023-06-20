@@ -35,8 +35,8 @@ const uploadImageToS3 = async (file) => {
 
   const buffer = await sharp(file.buffer)
     .resize({
-      width: 1920,
-      height: 1080,
+      width: 1350,
+      height: 415,
       fit: "contain",
     })
     .toBuffer();

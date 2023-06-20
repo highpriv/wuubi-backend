@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const AuthController = require("./AuthController");
 const PostController = require("./PostController");
+const SettingsController = require("./SettingsController");
 
 const { VERSION, NODE_ENV } = process.env;
 
@@ -38,3 +39,4 @@ module.exports.controllerRootSlash = function (req, res, next) {
 
 module.exports.AuthController = AuthController;
 module.exports.PostController = PostController;
+module.exports.SettingsController = SettingsController;

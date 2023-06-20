@@ -1,3 +1,5 @@
+//#ToDo: Move all routes to seperated files
+
 // ? Node modules.
 const express = require("express");
 const router = express.Router();
@@ -7,6 +9,7 @@ const {
   controllerRootSlash,
   AuthController,
   PostController,
+  SettingsController,
 } = require("../controllers");
 
 // ? Root slash.
@@ -18,6 +21,7 @@ router.post(
   [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
   PostController.createPostHandler
 );
+router.get("/settings", SettingsController.getSettings);
 
 // ? Export.
 module.exports = router;
