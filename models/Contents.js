@@ -67,17 +67,22 @@ const ContentSchema = new Schema(
   }
 );
 
+ContentSchema.pre("save", async function (next) {
+  if (this._doc.status === "Draft") {
+    this.schema.path("title").required(false);
+    this.schema.path("category").required(false);
+    this.schema.path("content").required(false);
+    this.schema.path("summary").required(false);
+    this.schema.path("thumbnail").required(false);
+  }
+
+  next();
+});
 ContentSchema.virtual("user", {
   ref: "User",
   localField: "userID",
   foreignField: "id",
   justOne: true,
 });
-
-ContentSchema.pre("save", async function (next) {
-  console.log("asdasd");
-  next();
-});
-
 const Content = mongoose.model("Content", ContentSchema);
 module.exports = Content;
