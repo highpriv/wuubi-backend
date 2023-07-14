@@ -19,42 +19,35 @@ const ContentSchema = new Schema(
     id: AutoID,
     title: {
       type: String,
-      required: true,
     },
     type: {
       type: String,
-      required: true,
+
       enum: ["standart", "list", "test", "quiz", "poll"],
     },
     slug: {
       type: String,
-      required: true,
     },
     category: {
       type: String,
-      required: true,
+
       enum: categoryEnums,
     },
     content: {
       type: String,
-      required: true,
     },
     summary: {
       type: String,
-      required: true,
     },
     thumbnail: {
       type: String,
-      required: true,
     },
 
     userID: {
       type: ObjectId,
-      required: true,
     },
     status: {
       type: String,
-      required: false,
       enum: ["Draft", "Pending", "Published", "Rejected"],
       default: "Pending",
     },
@@ -67,17 +60,13 @@ const ContentSchema = new Schema(
   }
 );
 
-ContentSchema.pre("save", async function (next) {
-  if (this._doc.status === "Draft") {
-    this.schema.path("title").required(false);
-    this.schema.path("category").required(false);
-    this.schema.path("content").required(false);
-    this.schema.path("summary").required(false);
-    this.schema.path("thumbnail").required(false);
+ContentSchema.pre("validate", async function (next) {
+  if (this.status === "Draft") {
+    next();
+  } else {
   }
-
-  next();
 });
+
 ContentSchema.virtual("user", {
   ref: "User",
   localField: "userID",

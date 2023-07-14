@@ -12,18 +12,25 @@ const secretAccessKey = process.env.SECRET_KEY;
 const uploadImageToS3 = async (file) => {
   let randomImageName;
 
-  const generateRandomImageName = (bytes = 16) => {
+  const generateRandomImageName = (bytes = 16, file) => {
+    console.log("ffff", file);
+    const fileExtension = file.originalname.split(".").pop();
     const newImgName = crypto.randomBytes(bytes).toString("hex");
-    randomImageName = newImgName;
+    randomImageName = newImgName + "." + fileExtension;
   };
 
-  generateRandomImageName();
+  generateRandomImageName(16, file);
 
-  Contents.findOne({ where: { thumbnail: randomImageName } }).then((result) => {
+  try {
+    const result = await Contents.findOne({
+      where: { thumbnail: randomImageName },
+    });
     if (result) {
-      generateRandomImageName();
+      generateRandomImageName(16, file);
     }
-  });
+  } catch (err) {
+    throw new Error("Görsel kaydedilirken hata oluştu.");
+  }
 
   const s3 = new S3Client({
     credentials: {

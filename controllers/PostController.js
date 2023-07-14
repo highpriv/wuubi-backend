@@ -2,7 +2,7 @@ const { uploadImageToS3 } = require("../services/uploadService");
 const Contents = require("../models/Contents");
 const Users = require("../models/User");
 const generateSlug = require("../utils/generateSlug");
-
+const generateRandomSlug = require("../utils/randomSlug");
 const controller = {
   async createPostHandler(req, res, next) {
     const { title, summary, category, content, status, type } = req.body;
@@ -85,7 +85,7 @@ const controller = {
   },
 
   async autosaveHandler(req, res) {
-    const { title, summary, category, content, status, type } = req.body;
+    const { title, summary, category, content, type } = req.body;
     const { _id } = req.user;
 
     try {
@@ -94,6 +94,7 @@ const controller = {
         status: "Draft",
         type,
       });
+      const uploadedFile = req.file ? await uploadImageToS3(req.file) : "";
 
       if (draft) {
         draft.title = title;
@@ -101,23 +102,58 @@ const controller = {
         draft.category = category;
         draft.content = content;
         draft.status = "Draft";
+        draft.thumbnail = uploadedFile;
+        draft.save();
       } else {
-        draft = new Contents({
-          title: title,
-          slug: generateSlug(title),
+        let slug = generateRandomSlug();
+        let slugChecker = true;
+        let counter = 1;
+
+        while (slugChecker) {
+          await Contents.findOne({ slug }).then((result) => {
+            if (result || slug === "") {
+              slug = generateRandomSlug();
+              counter++;
+            } else {
+              slugChecker = false;
+            }
+          });
+        }
+        draft = await Contents.create({
+          title,
           summary,
           category,
+          slug,
           content,
-          userID: _id,
+          thumbnail: uploadedFile,
           status: "Draft",
+          type,
+          userID: _id,
         });
       }
-      await draft.save();
 
-      res.status(200).json({ message: "Taslak Kaydedildi", draft });
+      res.status(201).json({ message: "Taslak Kaydedildi", draft });
     } catch (error) {
       console.error("Autosave error:", error);
       res.status(500).json({ error: "Taslak kaydedilirken hata oluştu." });
+    }
+  },
+
+  async getDraftHandler(req, res) {
+    const { _id } = req.user;
+    const { type } = req.query;
+    try {
+      const draft = await Contents.findOne({
+        userID: _id,
+        status: "Draft",
+        type,
+      });
+      if (!draft) {
+        return res.status(404).json({ error: "Taslak bulunamadı." });
+      }
+      res.status(200).json(draft);
+    } catch (error) {
+      res.status(500).json({ error: "Taslak getirilirken hata oluştu." });
     }
   },
 };
