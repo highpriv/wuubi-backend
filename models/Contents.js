@@ -1,5 +1,18 @@
 const { mongoose, ObjectId, Schema } = require("mongoose");
-const bcrypt = require("bcryptjs");
+const Settings = require("./Settings");
+
+let categoryEnums = [];
+
+async function fetchCategoryEnums() {
+  try {
+    const settings = await Settings.findOne().exec();
+    categoryEnums = settings.contentCategories.map((category) => category.slug);
+  } catch (error) {
+    throw error;
+  }
+}
+
+fetchCategoryEnums();
 
 const ContentSchema = new Schema(
   {
@@ -8,6 +21,11 @@ const ContentSchema = new Schema(
       type: String,
       required: true,
     },
+    type: {
+      type: String,
+      required: true,
+      enum: ["standart", "list", "test", "quiz", "poll"],
+    },
     slug: {
       type: String,
       required: true,
@@ -15,7 +33,7 @@ const ContentSchema = new Schema(
     category: {
       type: String,
       required: true,
-      enum: ["gundem", "teknoloji-ve-bilim", "kultur-ve-sanat"],
+      enum: categoryEnums,
     },
     content: {
       type: String,
@@ -48,11 +66,18 @@ const ContentSchema = new Schema(
     toJSON: { virtuals: true },
   }
 );
+
 ContentSchema.virtual("user", {
   ref: "User",
   localField: "userID",
   foreignField: "id",
   justOne: true,
 });
+
+ContentSchema.pre("save", async function (next) {
+  console.log("asdasd");
+  next();
+});
+
 const Content = mongoose.model("Content", ContentSchema);
 module.exports = Content;

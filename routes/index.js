@@ -21,6 +21,11 @@ router.post(
   [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
   PostController.createPostHandler
 );
+router.post(
+  "/autosave",
+  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  PostController.autosaveHandler
+);
 router.get("/settings", SettingsController.getSettings);
 
 // ? Export.
