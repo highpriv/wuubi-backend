@@ -45,6 +45,7 @@ const ContentSchema = new Schema(
 
     userID: {
       type: ObjectId,
+      ref: "User",
     },
     status: {
       type: String,

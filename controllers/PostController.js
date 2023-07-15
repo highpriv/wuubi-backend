@@ -4,6 +4,45 @@ const Users = require("../models/User");
 const generateSlug = require("../utils/generateSlug");
 const generateRandomSlug = require("../utils/randomSlug");
 const controller = {
+  async getPublishedPosts(req, res) {
+    const { page, limit, category, type, slug } = req.query;
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+    const query = {
+      status: "Published",
+      type,
+    };
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (slug) {
+      query.slug = slug;
+    }
+
+    try {
+      const posts = await Contents.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .populate("userID", "name lastname username");
+
+      const totalPosts = await Contents.countDocuments(query);
+
+      res.status(200).send({
+        posts,
+        totalPosts,
+        totalPages: Math.ceil(totalPosts / limitNumber),
+        currentPage: pageNumber,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
+    }
+  },
+
   async createPostHandler(req, res, next) {
     const { title, summary, category, content, status, type } = req.body;
     const { _id } = req.user;
@@ -13,13 +52,7 @@ const controller = {
       if (!result) return res.status(401).send("Kullanıcı bulunamadı.");
     });
 
-    const requiredFields = [
-      "title",
-      "summary",
-      "category",
-      "content",
-      "thumbnail",
-    ];
+    const requiredFields = ["title", "summary", "category", "content"];
     const fieldNames = {
       title: "Başlık",
       summary: "Özet",

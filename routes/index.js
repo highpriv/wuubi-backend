@@ -31,6 +31,7 @@ router.get(
   [Middlewares.authenticateMiddleware],
   PostController.getDraftHandler
 );
+router.get("/posts", PostController.getPublishedPosts);
 router.get("/settings", SettingsController.getSettings);
 
 // ? Export.
