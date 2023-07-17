@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const AuthController = require("./AuthController");
+const AdminController = require("./AdminController");
 const PostController = require("./PostController");
 const SettingsController = require("./SettingsController");
 
@@ -39,4 +40,5 @@ module.exports.controllerRootSlash = function (req, res, next) {
 
 module.exports.AuthController = AuthController;
 module.exports.PostController = PostController;
+module.exports.AdminController = AdminController;
 module.exports.SettingsController = SettingsController;

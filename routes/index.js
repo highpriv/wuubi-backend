@@ -10,6 +10,7 @@ const {
   AuthController,
   PostController,
   SettingsController,
+  AdminController,
 } = require("../controllers");
 
 // ? Root slash.
@@ -33,6 +34,12 @@ router.get(
 );
 router.get("/posts", PostController.getPublishedPosts);
 router.get("/settings", SettingsController.getSettings);
+router.post("/admin/login", AdminController.login);
+router.post(
+  "/admin/new",
+  [Middlewares.adminMiddleware],
+  AdminController.register
+);
 
 // ? Export.
 module.exports = router;
