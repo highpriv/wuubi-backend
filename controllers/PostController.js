@@ -31,6 +31,9 @@ const controller = {
 
       const totalPosts = await Contents.countDocuments(query);
 
+      if (!posts || posts.length === 0) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
       res.status(200).send({
         posts,
         totalPosts,
