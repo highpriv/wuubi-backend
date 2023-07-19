@@ -38,6 +38,8 @@ const controller = {
         token,
         name: user.name,
         lastname: user.lastname,
+        email: user.email,
+        avatar: user.avatar,
       });
     } catch (err) {
       console.log(err.message);
