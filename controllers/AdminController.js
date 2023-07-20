@@ -121,5 +121,43 @@ const controller = {
       res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
     }
   },
+
+  async updatePost(req, res) {
+    const { status, title, type, slug, category, content, summary, thumbnail } =
+      req.body;
+
+    const { id } = req.query;
+    try {
+      const post = await Contents.findById(id);
+      if (!post) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
+
+      const updatedPost = {
+        status,
+        title,
+        type,
+        slug,
+        category,
+        content,
+        summary,
+        thumbnail,
+      };
+
+      Object.keys(updatedPost).forEach((key) => {
+        if (!updatedPost[key]) {
+          delete updatedPost[key];
+        }
+      });
+
+      Object.assign(post, updatedPost);
+
+      await post.save();
+      res.status(200).send(post);
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerik güncellenirken bir hata meydana geldi.");
+    }
+  },
 };
 module.exports = controller;

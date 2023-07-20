@@ -3,9 +3,13 @@ const Contents = require("../models/Contents");
 const Users = require("../models/User");
 const generateSlug = require("../utils/generateSlug");
 const generateRandomSlug = require("../utils/randomSlug");
+const dtos = require("../utils/dtos/index");
 const controller = {
   async getPublishedPosts(req, res) {
     const { page, limit, category, type, slug } = req.query;
+    const userIP =
+      req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+
     const pageNumber = parseInt(page) || 1;
     const limitNumber = parseInt(limit) || 10;
     const skip = (pageNumber - 1) * limitNumber;
@@ -34,8 +38,23 @@ const controller = {
       if (!posts || posts.length === 0) {
         return res.status(404).send("İçerik bulunamadı.");
       }
+
+      if (userIP) {
+        posts.forEach((post) => {
+          if (!post.uniqueViewCount.includes(userIP)) {
+            post.viewCount = post.viewCount + 1;
+            post.dailyViewCount = post.dailyViewCount + 1;
+            post.uniqueDailyViewCount.push(userIP);
+            post.uniqueViewCount.push(userIP);
+            post.save();
+          }
+        });
+      }
+
+      const modifiedPosts = posts.map((post) => dtos.contentDto(post));
+
       res.status(200).send({
-        posts,
+        posts: modifiedPosts,
         totalPosts,
         totalPages: Math.ceil(totalPosts / limitNumber),
         currentPage: pageNumber,
@@ -190,6 +209,25 @@ const controller = {
       res.status(200).json(draft);
     } catch (error) {
       res.status(500).json({ error: "Taslak getirilirken hata oluştu." });
+    }
+  },
+
+  async getFeaturedPosts(req, res) {
+    try {
+      const posts = await Contents.find({
+        status: "Published",
+      })
+        .sort({ createdAt: -1, dailyViewCount: -1 })
+        .limit(3)
+        .populate("userID", "name lastname username");
+
+      if (!posts || posts.length === 0) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
+      res.status(200).send(posts.map((post) => dtos.contentDto(post)));
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
     }
   },
 };

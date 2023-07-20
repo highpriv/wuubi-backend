@@ -16,7 +16,10 @@ fetchCategoryEnums();
 
 const ContentSchema = new Schema(
   {
-    id: AutoID,
+    id: {
+      type: Schema.Types.ObjectId,
+      auto: true,
+    },
     title: {
       type: String,
     },
@@ -42,6 +45,27 @@ const ContentSchema = new Schema(
     thumbnail: {
       type: String,
     },
+    viewCount: {
+      type: Number,
+      default: 0,
+    },
+
+    dailyViewCount: {
+      type: Number,
+      default: 0,
+    },
+
+    uniqueViewCount: [
+      {
+        type: String,
+      },
+    ],
+
+    uniqueDailyViewCount: [
+      {
+        type: String,
+      },
+    ],
 
     userID: {
       type: ObjectId,

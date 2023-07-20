@@ -17,6 +17,8 @@ mongoose.connect(process.env.MongoDBURI, {
   useNewUrlParser: true,
 });
 
+require("./cron-jobs/resetDailyView");
+
 app.use(cors);
 app.set("view engine", "ejs"); // ? Template engine tipi.
 

@@ -21,4 +21,6 @@ router.get(
   PostController.getDraftHandler
 );
 
+router.get("/featured-posts", PostController.getFeaturedPosts);
+
 module.exports = router;
