@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
+const Contents = require("../models/Contents");
 
 const controller = {
   async login(req, res, next) {
@@ -76,6 +77,48 @@ const controller = {
       res.status(401).send({
         message: "An error occured!",
       });
+    }
+  },
+
+  async getPosts(req, res) {
+    const { page, limit, category, type, slug } = req.query;
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+    const query = {
+      type,
+    };
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (slug) {
+      query.slug = slug;
+    }
+
+    try {
+      const posts = await Contents.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
+        .populate("userID", "name lastname username");
+
+      const totalPosts = await Contents.countDocuments(query);
+
+      if (!posts || posts.length === 0) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
+
+      res.status(200).send({
+        posts,
+        totalPosts,
+        totalPages: Math.ceil(totalPosts / limitNumber),
+        currentPage: pageNumber,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
     }
   },
 };

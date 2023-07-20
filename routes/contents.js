@@ -1,1 +1,24 @@
-// i'm gonna move the contents routes here. i created'em in the index.js file just to see if they work.
+const express = require("express");
+const router = express.Router();
+const Middlewares = require("../middlewares");
+const { PostController } = require("../controllers");
+
+router.get("/posts", PostController.getPublishedPosts);
+router.post(
+  "/posts",
+  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  PostController.createPostHandler
+);
+
+router.post(
+  "/autosave",
+  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  PostController.autosaveHandler
+);
+router.get(
+  "/autosave",
+  [Middlewares.authenticateMiddleware],
+  PostController.getDraftHandler
+);
+
+module.exports = router;

@@ -1,1 +1,8 @@
-// i'm gonna move the auth routes here. i created'em in the index.js file just to see if they work.
+const express = require("express");
+const router = express.Router();
+const { AuthController } = require("../controllers");
+
+router.post("/login", AuthController.login);
+router.post("/register", AuthController.register);
+
+module.exports = router;
