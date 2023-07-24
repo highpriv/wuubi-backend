@@ -140,24 +140,53 @@ const controller = {
   },
 
   async autosaveHandler(req, res) {
-    const { title, summary, category, content, type } = req.body;
-    const { _id } = req.user;
+    console.log("files", req.files);
+    let { title, summary, category, content, type, listContent } = req.body;
 
+    const { _id } = req.user;
+    listContent = listContent ? JSON.parse(listContent) : [];
     try {
       let draft = await Contents.findOne({
         userID: _id,
         status: "Draft",
         type,
       });
-      const uploadedFile = req.file ? await uploadImageToS3(req.file) : "";
+
+      let thumbnailImg;
+      if (req.files && req.files.thumbnail) {
+        thumbnailImg = await uploadImageToS3(req.files.thumbnail[0]);
+      }
+
+      let listImages = [];
+      if (req.files) {
+        for (let i = 0; i < 30; i++) {
+          if (req.files[`listImage_${i}`]) {
+            listImages.push(
+              await uploadImageToS3(req.files[`listImage_${i}`][0])
+            );
+          }
+        }
+      }
+
+      listImages = listImages.filter((image) => image);
+
+      if (listImages.length > 0) {
+        listContent = listContent.map((item, index) => {
+          if (listImages[index]) {
+            item.image = listImages[index];
+          }
+          return item;
+        });
+      }
 
       if (draft) {
         draft.title = title;
         draft.summary = summary;
         draft.category = category;
         draft.content = content;
+        draft.listContent = listContent;
         draft.status = "Draft";
-        draft.thumbnail = uploadedFile;
+        draft.thumbnail = thumbnailImg;
         draft.save();
       } else {
         let slug = generateRandomSlug();
@@ -179,6 +208,7 @@ const controller = {
           summary,
           category,
           slug,
+          listContent,
           content,
           thumbnail: uploadedFile,
           status: "Draft",

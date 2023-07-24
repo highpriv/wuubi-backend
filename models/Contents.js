@@ -28,6 +28,11 @@ const ContentSchema = new Schema(
 
       enum: ["standart", "list", "test", "quiz", "poll"],
     },
+    listContent: [
+      {
+        type: Object,
+      },
+    ],
     slug: {
       type: String,
     },

@@ -12,7 +12,10 @@ router.post(
 
 router.post(
   "/autosave",
-  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  [
+    Middlewares.authenticateMiddleware,
+    Middlewares.uploadFieldsMiddlewareGenerator,
+  ],
   PostController.autosaveHandler
 );
 router.get(
