@@ -66,8 +66,11 @@ const controller = {
   },
 
   async createPostHandler(req, res, next) {
-    const { title, summary, category, content, status, type } = req.body;
+    let { title, summary, category, content, status, type, pollContent } =
+      req.body;
     const { _id } = req.user;
+
+    pollContent = pollContent ? JSON.parse(pollContent) : [];
     if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
 
     Users.findById(_id).then((result) => {
@@ -117,6 +120,7 @@ const controller = {
       title,
       slug,
       content,
+      pollContent,
       summary,
       category,
       type,
@@ -141,10 +145,12 @@ const controller = {
 
   async autosaveHandler(req, res) {
     console.log("files", req.files);
-    let { title, summary, category, content, type, listContent } = req.body;
+    let { title, summary, category, content, type, listContent, pollContent } =
+      req.body;
 
     const { _id } = req.user;
     listContent = listContent ? JSON.parse(listContent) : [];
+    pollContent = pollContent ? JSON.parse(pollContent) : [];
     try {
       let draft = await Contents.findOne({
         userID: _id,
@@ -185,6 +191,7 @@ const controller = {
         draft.category = category;
         draft.content = content;
         draft.listContent = listContent;
+        draft.pollContent = pollContent;
         draft.status = "Draft";
         draft.thumbnail = thumbnailImg;
         draft.save();
@@ -210,7 +217,7 @@ const controller = {
           slug,
           listContent,
           content,
-          thumbnail: uploadedFile,
+          thumbnail: thumbnailImg,
           status: "Draft",
           type,
           userID: _id,

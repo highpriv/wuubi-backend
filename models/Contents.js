@@ -33,6 +33,11 @@ const ContentSchema = new Schema(
         type: Object,
       },
     ],
+    pollContent: [
+      {
+        type: Object,
+      },
+    ],
     slug: {
       type: String,
     },
