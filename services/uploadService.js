@@ -10,55 +10,58 @@ const accessKey = process.env.ACCESS_KEY;
 const secretAccessKey = process.env.SECRET_KEY;
 
 const uploadImageToS3 = async (file) => {
-  let randomImageName;
-
-  const generateRandomImageName = (bytes = 16, file) => {
-    console.log("ffff", file);
-    const fileExtension = file.originalname.split(".").pop();
-    const newImgName = crypto.randomBytes(bytes).toString("hex");
-    randomImageName = newImgName + "." + fileExtension;
-  };
-
-  generateRandomImageName(16, file);
-
   try {
-    const result = await Contents.findOne({
-      where: { thumbnail: randomImageName },
-    });
-    if (result) {
-      generateRandomImageName(16, file);
+    let randomImageName;
+
+    const generateRandomImageName = (bytes = 16, file) => {
+      const fileExtension = file.originalname.split(".").pop();
+      const newImgName = crypto.randomBytes(bytes).toString("hex");
+      randomImageName = newImgName + "." + fileExtension;
+    };
+
+    generateRandomImageName(16, file);
+
+    try {
+      const result = await Contents.findOne({
+        where: { thumbnail: randomImageName },
+      });
+      if (result) {
+        generateRandomImageName(16, file);
+      }
+    } catch (err) {
+      throw new Error("Görsel kaydedilirken hata oluştu.");
     }
-  } catch (err) {
-    throw new Error("Görsel kaydedilirken hata oluştu.");
-  }
 
-  const s3 = new S3Client({
-    credentials: {
-      accessKeyId: accessKey,
-      secretAccessKey: secretAccessKey,
-    },
-    region: bucketRegion,
-  });
+    const s3 = new S3Client({
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretAccessKey,
+      },
+      region: bucketRegion,
+    });
 
-  const buffer = await sharp(file.buffer)
-    .resize({
-      width: 1350,
-      height: 415,
-      fit: "contain",
-    })
-    .toBuffer();
+    const buffer = await sharp(file.buffer)
+      .resize({
+        width: 1350,
+        height: 415,
+        fit: "contain",
+      })
+      .toBuffer();
 
-  const params = {
-    Bucket: bucketName,
-    Key: randomImageName,
-    Body: buffer,
-    ContentType: file.mimetype,
-  };
+    const params = {
+      Bucket: bucketName,
+      Key: randomImageName,
+      Body: buffer,
+      ContentType: file.mimetype,
+    };
 
-  try {
-    const command = new PutObjectCommand(params);
-    await s3.send(command);
-    return randomImageName;
+    try {
+      const command = new PutObjectCommand(params);
+      await s3.send(command);
+      return randomImageName;
+    } catch (err) {
+      throw new Error("Görsel yüklenirken bir hata oluştu.");
+    }
   } catch (err) {
     throw new Error("Görsel yüklenirken bir hata oluştu.");
   }

@@ -66,16 +66,33 @@ const controller = {
   },
 
   async createPostHandler(req, res, next) {
-    let { title, summary, category, content, status, type, pollContent } =
-      req.body;
+    let {
+      title,
+      summary,
+      category,
+      content,
+      status,
+      type,
+      pollContent,
+      quizContent,
+      listContent,
+    } = req.body;
     const { _id } = req.user;
 
     pollContent = pollContent ? JSON.parse(pollContent) : [];
-    if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
+    quizContent = quizContent ? JSON.parse(quizContent) : [];
+    listContent = listContent ? JSON.parse(listContent) : [];
 
-    Users.findById(_id).then((result) => {
-      if (!result) return res.status(401).send("Kullanıcı bulunamadı.");
-    });
+    try {
+      if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
+
+      Users.findById(_id).then((result) => {
+        if (!result) return res.status(401).send("Kullanıcı bulunamadı.");
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(401).send("Kullanıcı bulunamadı.");
+    }
 
     const requiredFields = ["title", "summary", "category", "content"];
     const fieldNames = {
@@ -83,7 +100,6 @@ const controller = {
       summary: "Özet",
       category: "Kategori",
       content: "İçerik",
-      thumbnail: "Öne Çıkan Görsel",
     };
 
     const missingFields = requiredFields.filter((field) => !req.body[field]);
@@ -116,27 +132,40 @@ const controller = {
       });
     }
 
-    const newPost = {
+    console.log("geçti");
+
+    let newPost = {
       title,
       slug,
       content,
       pollContent,
+      quizContent,
+      listContent,
       summary,
       category,
       type,
       userID: _id,
-      status: status === "Draft" ? "Draft" : "Pending",
+      status: "Pending",
     };
 
-    try {
-      const uploadedFile = await uploadImageToS3(req.file);
-      newPost.thumbnail = uploadedFile;
+    console.log("newPost", newPost);
 
-      await Contents.create(newPost).then((result) => {
-        res.status(201).send({
-          message: "İçerik başarıyla oluşturuldu.",
+    try {
+      if (req.files && req.files.thumbnail) {
+        newPost.thumbnail = await uploadImageToS3(req.files.thumbnail[0]);
+      }
+
+      await Contents.create(newPost)
+        .then((result) => {
+          res.status(201).send({
+            message: "İçerik başarıyla oluşturuldu.",
+            result,
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.status(400).send("İçerik oluşturulurken bir hata meydana geldi.");
         });
-      });
     } catch (error) {
       console.log("hata!", error);
       res.status(400).send("İçerik oluşturulurken bir hata meydana geldi.");
@@ -144,13 +173,21 @@ const controller = {
   },
 
   async autosaveHandler(req, res) {
-    console.log("files", req.files);
-    let { title, summary, category, content, type, listContent, pollContent } =
-      req.body;
+    let {
+      title,
+      summary,
+      category,
+      content,
+      type,
+      listContent,
+      pollContent,
+      quizContent,
+    } = req.body;
 
     const { _id } = req.user;
     listContent = listContent ? JSON.parse(listContent) : [];
     pollContent = pollContent ? JSON.parse(pollContent) : [];
+    quizContent = quizContent ? JSON.parse(quizContent) : [];
     try {
       let draft = await Contents.findOne({
         userID: _id,
@@ -192,6 +229,7 @@ const controller = {
         draft.content = content;
         draft.listContent = listContent;
         draft.pollContent = pollContent;
+        draft.quizContent = quizContent;
         draft.status = "Draft";
         draft.thumbnail = thumbnailImg;
         draft.save();

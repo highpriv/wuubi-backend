@@ -38,6 +38,11 @@ const ContentSchema = new Schema(
         type: Object,
       },
     ],
+    quizContent: [
+      {
+        type: Object,
+      },
+    ],
     slug: {
       type: String,
     },
