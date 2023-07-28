@@ -76,12 +76,14 @@ const controller = {
       pollContent,
       quizContent,
       listContent,
+      testContent,
     } = req.body;
     const { _id } = req.user;
 
     pollContent = pollContent ? JSON.parse(pollContent) : [];
     quizContent = quizContent ? JSON.parse(quizContent) : [];
     listContent = listContent ? JSON.parse(listContent) : [];
+    testContent = testContent ? JSON.parse(testContent) : [];
 
     try {
       if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
@@ -132,8 +134,6 @@ const controller = {
       });
     }
 
-    console.log("geçti");
-
     let newPost = {
       title,
       slug,
@@ -141,6 +141,7 @@ const controller = {
       pollContent,
       quizContent,
       listContent,
+      testContent,
       summary,
       category,
       type,
@@ -182,12 +183,15 @@ const controller = {
       listContent,
       pollContent,
       quizContent,
+      testContent,
     } = req.body;
 
     const { _id } = req.user;
     listContent = listContent ? JSON.parse(listContent) : [];
     pollContent = pollContent ? JSON.parse(pollContent) : [];
     quizContent = quizContent ? JSON.parse(quizContent) : [];
+    testContent = testContent ? JSON.parse(testContent) : [];
+
     try {
       let draft = await Contents.findOne({
         userID: _id,
@@ -230,6 +234,7 @@ const controller = {
         draft.listContent = listContent;
         draft.pollContent = pollContent;
         draft.quizContent = quizContent;
+        draft.testContent = testContent;
         draft.status = "Draft";
         draft.thumbnail = thumbnailImg;
         draft.save();

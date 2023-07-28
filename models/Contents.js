@@ -43,6 +43,11 @@ const ContentSchema = new Schema(
         type: Object,
       },
     ],
+    testContent: [
+      {
+        type: Object,
+      },
+    ],
     slug: {
       type: String,
     },
