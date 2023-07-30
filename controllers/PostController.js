@@ -70,8 +70,8 @@ const controller = {
       title,
       summary,
       category,
+      thumbnail,
       content,
-      status,
       type,
       pollContent,
       quizContent,
@@ -96,12 +96,19 @@ const controller = {
       return res.status(401).send("Kullanıcı bulunamadı.");
     }
 
-    const requiredFields = ["title", "summary", "category", "content"];
+    const requiredFields = [
+      "title",
+      "summary",
+      "category",
+      "content",
+      "thumbnail",
+    ];
     const fieldNames = {
       title: "Başlık",
       summary: "Özet",
       category: "Kategori",
       content: "İçerik",
+      thumbnail: "İçerik Görseli",
     };
 
     const missingFields = requiredFields.filter((field) => !req.body[field]);
@@ -149,10 +156,10 @@ const controller = {
       status: "Pending",
     };
 
-    console.log("newPost", newPost);
-
     try {
-      if (req.files && req.files.thumbnail) {
+      if (typeof thumbnail === "string") {
+        newPost.thumbnail = thumbnail;
+      } else if (req.files && req.files.thumbnail) {
         newPost.thumbnail = await uploadImageToS3(req.files.thumbnail[0]);
       }
 
@@ -203,24 +210,30 @@ const controller = {
       if (req.files && req.files.thumbnail) {
         thumbnailImg = await uploadImageToS3(req.files.thumbnail[0]);
       }
+      else {
+        thumbnailImg = draft.thumbnail;
+      }
 
       let listImages = [];
       if (req.files) {
+        console.log("req.files", req.files)
         for (let i = 0; i < 30; i++) {
           if (req.files[`listImage_${i}`]) {
             listImages.push(
-              await uploadImageToS3(req.files[`listImage_${i}`][0])
+            {
+              index: i,
+              image: await uploadImageToS3(req.files[`listImage_${i}`][0]),
+            }
             );
           }
         }
       }
 
-      listImages = listImages.filter((image) => image);
-
       if (listImages.length > 0) {
         listContent = listContent.map((item, index) => {
-          if (listImages[index]) {
-            item.image = listImages[index];
+          const relatedImage = listImages.find((image) => image.index === index);
+          if (relatedImage) {
+            item.image = relatedImage.image;
           }
           return item;
         });
