@@ -216,7 +216,6 @@ const controller = {
 
       let listImages = [];
       if (req.files) {
-        console.log("req.files", req.files)
         for (let i = 0; i < 30; i++) {
           if (req.files[`listImage_${i}`]) {
             listImages.push(
@@ -230,14 +229,32 @@ const controller = {
       }
 
       if (listImages.length > 0) {
-        listContent = listContent.map((item, index) => {
-          const relatedImage = listImages.find((image) => image.index === index);
-          if (relatedImage) {
-            item.image = relatedImage.image;
-          }
-          return item;
-        });
+        if (listImages.length > 0) {
+          switch (type) {
+             case "list":
+               listContent = listContent.map((item, index) => {
+                 const relatedImage = listImages.find((image) => image.index === index);
+                 if (relatedImage) {
+                   item.image = relatedImage.image;
+                 }
+                 return item;
+               });
+               break;
+             case "test":
+               testContent.results = testContent.results.map((item, index) => {
+                  const relatedImage = listImages.find((image) => image.index === index);
+                  if (relatedImage) {
+                    item.image = relatedImage.image;
+                  }
+                  return item;
+                });
+                
+               break;
+             default:
+               break;
+         }
       }
+    }
 
       if (draft) {
         draft.title = title;
