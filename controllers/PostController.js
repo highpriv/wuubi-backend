@@ -85,30 +85,18 @@ const controller = {
     listContent = listContent ? JSON.parse(listContent) : [];
     testContent = testContent ? JSON.parse(testContent) : [];
 
-    try {
-      if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
-
-      Users.findById(_id).then((result) => {
-        if (!result) return res.status(401).send("Kullanıcı bulunamadı.");
-      });
-    } catch (error) {
-      console.log(error);
-      return res.status(401).send("Kullanıcı bulunamadı.");
-    }
 
     const requiredFields = [
       "title",
       "summary",
       "category",
       "content",
-      "thumbnail",
     ];
     const fieldNames = {
       title: "Başlık",
       summary: "Özet",
       category: "Kategori",
       content: "İçerik",
-      thumbnail: "İçerik Görseli",
     };
 
     const missingFields = requiredFields.filter((field) => !req.body[field]);
@@ -120,10 +108,20 @@ const controller = {
       return res
         .status(400)
         .send(
-          `Eksik olan ${
-            missingFieldNames.length > 1 ? "alanları" : "alanı"
+          `Eksik olan ${missingFieldNames.length > 1 ? "alanları" : "alanı"
           } girmeniz gerekmektedir: ${missingFieldNames}`
         );
+    }
+
+    try {
+      if (!_id) return res.status(401).send("Kullanıcı bulunamadı.");
+
+      Users.findById(_id).then((result) => {
+        if (!result) return res.status(401).send("Kullanıcı bulunamadı.");
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(401).send("Kullanıcı bulunamadı.");
     }
 
     let slug = generateSlug(title);
@@ -164,10 +162,16 @@ const controller = {
       }
 
       await Contents.create(newPost)
-        .then((result) => {
+        .then(async (result) => {
           res.status(201).send({
             message: "İçerik başarıyla oluşturuldu.",
             result,
+          });
+
+          await Contents.deleteMany({
+            userID: _id,
+            status: "Draft",
+            type,
           });
         })
         .catch((err) => {
@@ -219,10 +223,10 @@ const controller = {
         for (let i = 0; i < 30; i++) {
           if (req.files[`listImage_${i}`]) {
             listImages.push(
-            {
-              index: i,
-              image: await uploadImageToS3(req.files[`listImage_${i}`][0]),
-            }
+              {
+                index: i,
+                image: await uploadImageToS3(req.files[`listImage_${i}`][0]),
+              }
             );
           }
         }
@@ -231,30 +235,30 @@ const controller = {
       if (listImages.length > 0) {
         if (listImages.length > 0) {
           switch (type) {
-             case "list":
-               listContent = listContent.map((item, index) => {
-                 const relatedImage = listImages.find((image) => image.index === index);
-                 if (relatedImage) {
-                   item.image = relatedImage.image;
-                 }
-                 return item;
-               });
-               break;
-             case "test":
-               testContent.results = testContent.results.map((item, index) => {
-                  const relatedImage = listImages.find((image) => image.index === index);
-                  if (relatedImage) {
-                    item.image = relatedImage.image;
-                  }
-                  return item;
-                });
-                
-               break;
-             default:
-               break;
-         }
+            case "list":
+              listContent = listContent.map((item, index) => {
+                const relatedImage = listImages.find((image) => image.index === index);
+                if (relatedImage) {
+                  item.image = relatedImage.image;
+                }
+                return item;
+              });
+              break;
+            case "test":
+              testContent.results = testContent.results.map((item, index) => {
+                const relatedImage = listImages.find((image) => image.index === index);
+                if (relatedImage) {
+                  item.image = relatedImage.image;
+                }
+                return item;
+              });
+
+              break;
+            default:
+              break;
+          }
+        }
       }
-    }
 
       if (draft) {
         draft.title = title;
