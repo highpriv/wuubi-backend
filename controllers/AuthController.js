@@ -44,6 +44,7 @@ const controller = {
         name: user.name,
         lastname: user.lastname,
         username: user.username,
+        _id: user._id,
       });
     } catch (err) {
       console.log(err.message);

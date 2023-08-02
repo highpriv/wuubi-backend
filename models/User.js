@@ -1,5 +1,5 @@
 // ? Node modules.
-const mongoose = require("mongoose");
+const { mongoose, ObjectId, Schema } = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 AutoID = mongoose.Types.ObjectId;
@@ -48,6 +48,12 @@ const userSchema = new mongoose.Schema(
       required: false,
       default: [],
     },
+    joinedGroups: [
+      {
+        type: ObjectId,
+        ref: "Groups",
+      }
+    ],
   },
   {
     timestamps: true,
@@ -68,6 +74,12 @@ userSchema.virtual("profileContents", {
     localField: "_id",
     foreignField: "userID",
   }); */
+
+userSchema.virtual("groups", {
+  ref: "Groups",
+  localField: "joinedGroups",
+  foreignField: "members",
+});
 
 userSchema.pre("save", async function (next) {
   const user = this;
