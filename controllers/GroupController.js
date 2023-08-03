@@ -1,6 +1,7 @@
 const { uploadImageToS3 } = require("../services/uploadService");
 const Groups = require("../models/Groups");
 const Users = require("../models/User");
+const GroupComments = require("../models/GroupComments");
 const GroupPosts = require("../models/GroupPosts");
 const generateSlug = require("../utils/generateSlug");
 const controller = {
@@ -97,7 +98,7 @@ const controller = {
         .populate("members", "name surname username")
         .populate({
           path: "posts",
-          populate: { path: "user", select: "name lastname username" },
+          populate: [{ path: "user", select: "name lastname username" }],
         })
         .exec();
 
@@ -200,7 +201,16 @@ const controller = {
     const { slug } = req.params;
     const { _id } = req.user;
 
-    const { content, contentFile } = req.body;
+    const { content } = req.body;
+    let images = [];
+
+    if (req.files) {
+      images = await Promise.all(
+        req.files.map(async (image) => {
+          return await uploadImageToS3(image);
+        })
+      );
+    }
 
     if (!content) return res.status(400).send("İçerik belirtilmedi.");
 
@@ -224,24 +234,169 @@ const controller = {
       content,
       userID: _id,
       groupID: groupFinded._id,
+      images,
     };
 
-    await GroupPosts.create(newPost)
-      .then(async (result) => {
-        groupFinded.posts.push(result._id);
-        await groupFinded.save();
+    try {
+      const createdPost = await GroupPosts.create(newPost);
+      const populatedPost = await GroupPosts.findById(createdPost._id).populate(
+        "user"
+      );
 
-        return res.status(201).send({
-          message: "Gönderi başarıyla oluşturuldu.",
-          result,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        return res
-          .status(400)
-          .send("Gönderi oluşturulurken bir hata meydana geldi.");
+      groupFinded.posts.push(createdPost._id);
+      await groupFinded.save();
+
+      return res.status(201).send({
+        message: "Gönderi başarıyla oluşturuldu.",
+        post: populatedPost,
       });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send("Bir hata oluştu");
+    }
+  },
+
+  async actionPost(req, res, next) {
+    const { postID } = req.params;
+    const { _id } = req.user;
+    const { action } = req.body;
+
+    if (!["like", "dislike", "bookmark"].includes(action) || !action)
+      return res.status(400).send("Geçersiz eylem.");
+
+    if (!postID) return res.status(400).send("Gönderi belirtilmedi.");
+
+    try {
+      const findedPost = await GroupPosts.findById(postID)
+        .populate("user", "name lastname username")
+        .populate("comments", "user content createdAt userID")
+        .exec();
+
+      if (!findedPost) return res.status(404).send("Gönderi bulunamadı.");
+
+      if (action === "like") {
+        const isUserLiked = findedPost.likes.includes(_id);
+
+        if (isUserLiked) {
+          findedPost.likes = findedPost.likes.filter((id) => id != _id);
+        } else {
+          findedPost.likes.push(_id);
+        }
+
+        await findedPost.save();
+
+        return res.status(200).send({
+          message: `Gönderi ${
+            isUserLiked ? "beğenisi kaldırıldı." : "beğenildi."
+          }`,
+          post: findedPost,
+        });
+      }
+
+      if (action === "bookmark") {
+        const isUserBookmarked =
+          findedPost.bookmarks && findedPost.bookmarks.includes(_id)
+            ? true
+            : false;
+
+        if (isUserBookmarked) {
+          findedPost.bookmarks = findedPost.bookmarks.filter((id) => id != _id);
+        } else {
+          findedPost.bookmarks.push(_id);
+        }
+
+        await findedPost.save();
+
+        return res.status(200).send({
+          message: `Gönderi ${
+            isUserBookmarked ? "arşivden kaldırıldı." : "kaydedildi."
+          }`,
+          post: findedPost,
+        });
+      }
+    } catch (error) {}
+  },
+
+  async getPostComments(req, res, next) {
+    const { postID } = req.params;
+    const { _id } = req.user;
+
+    if (!postID) return res.status(400).send("Gönderi belirtilmedi.");
+
+    try {
+      const findedComments = await GroupComments.find({ postID })
+        .populate("user", "name lastname username")
+        .exec();
+
+      return res.status(200).send({
+        message: "Yorumlar başarıyla getirildi.",
+        comments: findedComments,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send("Bir hata oluştu");
+    }
+  },
+
+  async createPostComment(req, res, next) {
+    const { postID } = req.params;
+    const { _id } = req.user;
+    const { content } = req.body;
+
+    const errorMessages = [
+      {
+        message: "Gönderi bulunamadı.",
+        check: !postID,
+      },
+      {
+        message: "İçerik belirtilmedi.",
+        check: !content,
+      },
+      {
+        message: "Yorum içeriği çok kısa.",
+        check: content.length < 3,
+      },
+      {
+        message: "Yorum içeriği çok uzun.",
+        check: content.length > 500,
+      },
+    ];
+
+    const errorMessage = errorMessages.find((e) => e.check);
+
+    if (errorMessage) return res.status(400).send(errorMessage.message);
+
+    try {
+      const findedPost = await GroupPosts.findById(postID)
+        .populate("user", "name lastname username")
+        .populate("comments", "user content createdAt userID")
+        .exec();
+
+      if (!findedPost) return res.status(404).send("Gönderi bulunamadı.");
+
+      const newComment = {
+        content,
+        userID: _id,
+        postID: findedPost._id,
+      };
+
+      const createdComment = await GroupComments.create(newComment);
+
+      findedPost.comments.push(createdComment._id);
+      await findedPost.save();
+
+      const populatedComment = await GroupComments.findById(
+        createdComment._id
+      ).populate("user", "name lastname username");
+
+      return res.status(201).send({
+        message: "Yorum başarıyla oluşturuldu.",
+        comment: populatedComment,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send("Bir hata oluştu");
+    }
   },
 };
 module.exports = controller;

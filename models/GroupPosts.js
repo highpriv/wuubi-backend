@@ -15,7 +15,18 @@ const GroupPostSchema = new Schema(
       type: ObjectId,
       ref: "Groups",
     },
+    images: [
+      {
+        type: String,
+      },
+    ],
     likes: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
+    bookmarks: [
       {
         type: ObjectId,
         ref: "User",
@@ -52,7 +63,9 @@ GroupPostSchema.virtual("groups", {
 GroupPostSchema.virtual("groupComments", {
   ref: "GroupComments",
   localField: "comments",
-  foreignField: "id",
+  foreignField: "_id",
+  justOne: false,
+  options: { select: "user content createdAt userID" },
 });
 
 module.exports = mongoose.model("GroupPosts", GroupPostSchema, "groupPosts");

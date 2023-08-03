@@ -23,8 +23,26 @@ router.post(
 
 router.post(
   "/:slug/publish",
-  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  [Middlewares.authenticateMiddleware, Middlewares.uploadMultipleImages],
   GroupController.publishPost
 );
 
+router.post(
+  "/posts/:postID/action",
+  Middlewares.authenticateMiddleware,
+  GroupController.actionPost
+);
+
+router.get(
+  "/posts/:postID/comments",
+  Middlewares.authenticateMiddleware,
+
+  GroupController.getPostComments
+);
+
+router.post(
+  "/posts/:postID/comments",
+  Middlewares.authenticateMiddleware,
+  GroupController.createPostComment
+);
 module.exports = router;

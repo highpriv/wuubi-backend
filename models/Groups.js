@@ -53,14 +53,15 @@ const GroupSchema = new Schema(
 GroupSchema.virtual("user", {
   ref: "User",
   localField: "userID",
-  foreignField: "id",
+  foreignField: "_id",
   justOne: true,
+  options: { select: "name lastname username" },
 });
 
 GroupSchema.virtual("groupPosts", {
   ref: "GroupPosts",
   localField: "posts",
-  foreignField: "id",
+  foreignField: "_id",
   justOne: true,
 });
 
