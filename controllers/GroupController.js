@@ -6,7 +6,7 @@ const GroupPosts = require("../models/GroupPosts");
 const generateSlug = require("../utils/generateSlug");
 const controller = {
   async createGroup(req, res, next) {
-    let { title, summary, thumbnail, isPrivate } = req.body;
+    let { title, summary, isPrivate } = req.body;
     const { _id } = req.user;
 
     const requiredFields = ["title", "summary"];
@@ -61,14 +61,17 @@ const controller = {
       slug,
       summary,
       isPrivate,
-      thumbnail,
       admins: [_id],
       members: [_id],
     };
 
     try {
-      if (req.files && req.files.thumbnail) {
-        newGroup.thumbnail = await uploadImageToS3(req.files.thumbnail[0]);
+      if (req.files && req.files["cover"]) {
+        newGroup.cover = await uploadImageToS3(req.files["cover"][0]);
+      }
+
+      if (req.files && req.files["thumbnail"]) {
+        newGroup.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
       }
 
       await Groups.create(newGroup)
@@ -94,8 +97,8 @@ const controller = {
 
     try {
       const group = await Groups.findOne({ slug })
-        .populate("admins", "name surname username")
-        .populate("members", "name surname username")
+        .populate("admins", "name lastname username")
+        .populate("members", "name lastname username")
         .populate({
           path: "posts",
           populate: [{ path: "user", select: "name lastname username" }],
@@ -392,6 +395,140 @@ const controller = {
       return res.status(201).send({
         message: "Yorum başarıyla oluşturuldu.",
         comment: populatedComment,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send("Bir hata oluştu");
+    }
+  },
+
+  async likeComment(req, res, next) {
+    const { commentID, action } = req.params;
+    const { _id } = req.user;
+
+    if (!commentID) return res.status(400).send("Yorum belirtilmedi.");
+
+    try {
+      const findComment = await GroupComments.findById(commentID)
+        .populate("user", "name lastname username")
+        .exec();
+
+      if (!findComment) return res.status(404).send("Yorum bulunamadı.");
+
+      const isUserLiked = findComment.likes.includes(_id);
+      const isUserDisliked = findComment.dislikes.includes(_id);
+      switch (action) {
+        case "like":
+          if (isUserDisliked) {
+            findComment.dislikes = findComment.dislikes.filter(
+              (id) => id != _id
+            );
+          }
+          if (isUserLiked) {
+            findComment.likes = findComment.likes.filter((id) => id != _id);
+          } else {
+            findComment.likes.push(_id);
+          }
+          break;
+        case "dislike":
+          if (isUserLiked) {
+            findComment.likes = findComment.likes.filter((id) => id != _id);
+          }
+          if (isUserDisliked) {
+            findComment.dislikes = findComment.dislikes.filter(
+              (id) => id != _id
+            );
+          } else {
+            findComment.dislikes.push(_id);
+          }
+          break;
+        default:
+          return res.status(400).send("Geçersiz eylem.");
+      }
+
+      await findComment.save();
+
+      return res.status(200).send({
+        message: `Yorum ${isUserLiked ? "beğenisi kaldırıldı." : "beğenildi."}`,
+        comment: findComment,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(400).send("Bir hata oluştu");
+    }
+  },
+
+  async editGroup(req, res, next) {
+    const { groupID } = req.params;
+    const { _id } = req.user;
+    let { title, summary, isPrivate, admins, members } = req.body;
+
+    if (!groupID) return res.status(400).send("Grup belirtilmedi.");
+
+    const findGroup = await Groups.findById(groupID).exec();
+
+    if (!findGroup) return res.status(404).send("Grup bulunamadı.");
+
+    const isUserAdmin = findGroup.admins.includes(_id);
+
+    if (!isUserAdmin) return res.status(403).send("Yetkisiz işlem.");
+
+    if (req.files && req.files["cover"]) {
+      newGroup.cover = await uploadImageToS3(req.files["cover"][0]);
+    }
+
+    if (req.files && req.files["thumbnail"]) {
+      newGroup.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
+    }
+
+    let newGroup = {
+      title: title || findGroup.name,
+      summary: summary || findGroup.summary,
+      isPrivate: isPrivate || findGroup.isPrivate,
+    };
+
+    if (admins && admins.length === 0) {
+      return res.status(400).send("En az bir yönetici olmalıdır.");
+    }
+
+    if (members) {
+      members = JSON.parse(members);
+
+      const uniqueMembers = members.reduce((acc, current) => {
+        const x = acc.find((item) => item._id === current._id);
+        if (!x) {
+          return acc.concat([current]);
+        } else {
+          return acc;
+        }
+      }, []);
+
+      newGroup.members = uniqueMembers.map((member) => member._id);
+    }
+
+    if (admins) {
+      let parsedAdmins = JSON.parse(admins);
+
+      const uniqueAdmins = parsedAdmins.reduce((acc, current) => {
+        const x = acc.find((item) => item._id === current._id);
+        if (!x) {
+          return acc.concat([current]);
+        } else {
+          return acc;
+        }
+      }, []);
+
+      newGroup.admins = uniqueAdmins.map((admin) => admin._id);
+    }
+
+    try {
+      const updatedGroup = await Groups.findByIdAndUpdate(groupID, newGroup, {
+        new: true,
+      }).exec();
+
+      return res.status(200).send({
+        message: "Grup başarıyla güncellendi.",
+        group: updatedGroup,
       });
     } catch (error) {
       console.log(error);

@@ -6,7 +6,7 @@ const { PostController } = require("../controllers");
 router.get("/posts", PostController.getPublishedPosts);
 router.post(
   "/posts",
-  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  [Middlewares.multerMiddleware, Middlewares.authenticateMiddleware],
   PostController.createPostHandler
 );
 

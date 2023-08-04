@@ -18,6 +18,9 @@ const GroupSchema = new Schema(
     thumbnail: {
       type: String,
     },
+    cover: {
+      type: String,
+    },
     posts: [
       {
         type: ObjectId,

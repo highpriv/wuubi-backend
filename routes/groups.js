@@ -45,4 +45,16 @@ router.post(
   Middlewares.authenticateMiddleware,
   GroupController.createPostComment
 );
+
+router.post(
+  "/comments/:commentID/:action",
+  Middlewares.authenticateMiddleware,
+  GroupController.likeComment
+);
+
+router.put(
+  "/:groupID/edit",
+  [Middlewares.authenticateMiddleware, Middlewares.multerMiddleware],
+  GroupController.editGroup
+);
 module.exports = router;

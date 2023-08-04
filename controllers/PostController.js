@@ -85,13 +85,7 @@ const controller = {
     listContent = listContent ? JSON.parse(listContent) : [];
     testContent = testContent ? JSON.parse(testContent) : [];
 
-
-    const requiredFields = [
-      "title",
-      "summary",
-      "category",
-      "content",
-    ];
+    const requiredFields = ["title", "summary", "category", "content"];
     const fieldNames = {
       title: "Başlık",
       summary: "Özet",
@@ -108,7 +102,8 @@ const controller = {
       return res
         .status(400)
         .send(
-          `Eksik olan ${missingFieldNames.length > 1 ? "alanları" : "alanı"
+          `Eksik olan ${
+            missingFieldNames.length > 1 ? "alanları" : "alanı"
           } girmeniz gerekmektedir: ${missingFieldNames}`
         );
     }
@@ -155,10 +150,8 @@ const controller = {
     };
 
     try {
-      if (typeof thumbnail === "string") {
-        newPost.thumbnail = thumbnail;
-      } else if (req.files && req.files.thumbnail) {
-        newPost.thumbnail = await uploadImageToS3(req.files.thumbnail[0]);
+      if (req.files && req.files["thumbnail"]) {
+        newPost.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
       }
 
       await Contents.create(newPost)
@@ -213,8 +206,7 @@ const controller = {
       let thumbnailImg;
       if (req.files && req.files.thumbnail) {
         thumbnailImg = await uploadImageToS3(req.files.thumbnail[0]);
-      }
-      else {
+      } else {
         thumbnailImg = draft.thumbnail;
       }
 
@@ -222,12 +214,10 @@ const controller = {
       if (req.files) {
         for (let i = 0; i < 30; i++) {
           if (req.files[`listImage_${i}`]) {
-            listImages.push(
-              {
-                index: i,
-                image: await uploadImageToS3(req.files[`listImage_${i}`][0]),
-              }
-            );
+            listImages.push({
+              index: i,
+              image: await uploadImageToS3(req.files[`listImage_${i}`][0]),
+            });
           }
         }
       }
@@ -237,7 +227,9 @@ const controller = {
           switch (type) {
             case "list":
               listContent = listContent.map((item, index) => {
-                const relatedImage = listImages.find((image) => image.index === index);
+                const relatedImage = listImages.find(
+                  (image) => image.index === index
+                );
                 if (relatedImage) {
                   item.image = relatedImage.image;
                 }
@@ -246,7 +238,9 @@ const controller = {
               break;
             case "test":
               testContent.results = testContent.results.map((item, index) => {
-                const relatedImage = listImages.find((image) => image.index === index);
+                const relatedImage = listImages.find(
+                  (image) => image.index === index
+                );
                 if (relatedImage) {
                   item.image = relatedImage.image;
                 }
