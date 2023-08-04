@@ -2,6 +2,7 @@
 require("dotenv").config();
 
 const createError = require("http-errors");
+const http = require("http");
 const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
@@ -15,6 +16,45 @@ const app = express();
 
 mongoose.connect(process.env.MongoDBURI, {
   useNewUrlParser: true,
+});
+
+// ? Socket
+
+const socketIO = require("socket.io");
+const server = http.createServer(app);
+const io = socketIO(server);
+
+const activeSockets = new Map();
+
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("identifyUser", (userId) => {
+    activeSockets.set(userId, socket);
+  });
+
+  socket.on("newMessage", (data) => {
+    const { content, recipientUserId } = data;
+    const senderUserId = getUserIdFromSocket(socket);
+
+    if (activeSockets.has(recipientUserId)) {
+      const recipientSocket = activeSockets.get(recipientUserId);
+      recipientSocket.emit("newMessage", { content, senderUserId, messageId });
+    }
+
+    socket.on("disconnect", () => {
+      console.log("A user disconnected");
+      activeSockets.forEach((value, key) => {
+        if (value === socket) {
+          activeSockets.delete(key);
+        }
+      });
+    });
+
+    function getUserIdFromSocket(socket) {
+      // get userID from socket object token
+    }
+  });
 });
 
 require("./cron-jobs/resetDailyView");
