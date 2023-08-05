@@ -461,7 +461,15 @@ const controller = {
   async editGroup(req, res, next) {
     const { groupID } = req.params;
     const { _id } = req.user;
-    let { title, summary, isPrivate, admins, members } = req.body;
+    let {
+      title,
+      summary,
+      isPrivate,
+      admins,
+      members,
+      removeThumbnail,
+      removeCover,
+    } = req.body;
 
     if (!groupID) return res.status(400).send("Grup belirtilmedi.");
 
@@ -473,14 +481,6 @@ const controller = {
 
     if (!isUserAdmin) return res.status(403).send("Yetkisiz işlem.");
 
-    if (req.files && req.files["cover"]) {
-      newGroup.cover = await uploadImageToS3(req.files["cover"][0]);
-    }
-
-    if (req.files && req.files["thumbnail"]) {
-      newGroup.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
-    }
-
     let newGroup = {
       title: title || findGroup.name,
       summary: summary || findGroup.summary,
@@ -489,6 +489,17 @@ const controller = {
 
     if (admins && admins.length === 0) {
       return res.status(400).send("En az bir yönetici olmalıdır.");
+    }
+
+    if (removeThumbnail) newGroup.thumbnail = null;
+    if (removeCover) newGroup.cover = null;
+
+    if (req.files && req.files["cover"]) {
+      newGroup.cover = await uploadImageToS3(req.files["cover"][0]);
+    }
+
+    if (req.files && req.files["thumbnail"]) {
+      newGroup.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
     }
 
     if (members) {
