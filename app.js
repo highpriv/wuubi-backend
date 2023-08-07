@@ -1,6 +1,6 @@
 // ? Main Modules
 require("dotenv").config();
-
+const jwt = require("jsonwebtoken");
 const createError = require("http-errors");
 const http = require("http");
 const express = require("express");
@@ -41,19 +41,46 @@ const io = socketIO(server, {
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("New client connected!");
 
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error("Authentication token missing"));
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return next(new Error("Authentication failed"));
+    }
+    socket.userId = decoded._id;
+    next();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+
+
+io.on("connection", (socket) => {
+  console.log("New client connected, socket id:", socket.id, "user id:", socket.userId);
+ try{
   socket.on("privateMessage", async ({ senderId, receiverId, message }) => {
     try {
       const newMessage = await saveMessage(senderId, receiverId, message);
 
-      io.to(senderId).emit("privateMessage", newMessage);
-      io.to(receiverId).emit("privateMessage", newMessage);
+      socket.emit("privateMessage", newMessage);
+      const receiverSocket = Array.from(io.sockets.sockets.values()).find((s) => s.userId === receiverId);
+      if (receiverSocket) {
+        receiverSocket.emit("privateMessage", newMessage);
+      }
     } catch (error) {
       console.error("Error sending private message:", error);
     }
   });
+ }
+ catch(err){
+    console.log(err)
+  }
 
   socket.on("disconnect", () => {
     console.log("Client disconnected!");
