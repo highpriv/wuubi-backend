@@ -5,6 +5,7 @@ const PostController = require("./PostController");
 const GroupController = require("./GroupController");
 const userController = require("./userController");
 const SettingsController = require("./SettingsController");
+const messageController = require("./messageController");
 
 const { VERSION, NODE_ENV } = process.env;
 
@@ -46,3 +47,4 @@ module.exports.AdminController = AdminController;
 module.exports.GroupController = GroupController;
 module.exports.SettingsController = SettingsController;
 module.exports.userController = userController;
+module.exports.messageController = messageController;

@@ -5,6 +5,7 @@ const contentRoutes = require("./contents");
 const authRoutes = require("./auth");
 const groupRoutes = require("./groups");
 const userRoutes = require("./user");
+const messageRoutes = require("./messages");
 
 const { controllerRootSlash, SettingsController } = require("../controllers");
 
@@ -15,5 +16,6 @@ router.use("/groups", groupRoutes);
 router.get("/", controllerRootSlash);
 router.get("/settings", SettingsController.getSettings);
 router.use("/user", userRoutes);
+router.use("/messages", messageRoutes);
 
 module.exports = router;
