@@ -48,6 +48,12 @@ const userSchema = new mongoose.Schema(
       required: false,
       default: [],
     },
+    achievement: [
+      {
+        type: ObjectId,
+        ref: "Achievements",
+      },
+    ], 
     joinedGroups: [
       {
         type: ObjectId,
@@ -79,6 +85,12 @@ userSchema.virtual("groups", {
   ref: "Groups",
   localField: "joinedGroups",
   foreignField: "members",
+});
+
+userSchema.virtual("achievements", {
+  ref: "Achievements",
+  localField: "achievement",
+  foreignField: "_id",
 });
 
 userSchema.pre("save", async function (next) {

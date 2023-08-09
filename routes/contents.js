@@ -4,6 +4,7 @@ const Middlewares = require("../middlewares");
 const { PostController } = require("../controllers");
 
 router.get("/posts", PostController.getPublishedPosts);
+router.get("/get-post/:slug", PostController.getBySlug);
 router.post(
   "/posts",
   [Middlewares.multerMiddleware, Middlewares.authenticateMiddleware],

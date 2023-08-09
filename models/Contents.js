@@ -69,7 +69,12 @@ const ContentSchema = new Schema(
       type: Number,
       default: 0,
     },
-
+    comments: [
+      {
+        type: ObjectId,
+        ref: "Comment",
+      },
+    ],
     dailyViewCount: {
       type: Number,
       default: 0,
@@ -110,6 +115,13 @@ ContentSchema.pre("validate", async function (next) {
     next();
   } else {
   }
+});
+
+ContentSchema.virtual("contentComments", {
+  ref: "ContentComments",
+  localField: "comments",
+  foreignField: "_id",
+  count: true,
 });
 
 ContentSchema.virtual("user", {

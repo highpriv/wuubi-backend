@@ -3,9 +3,10 @@ const Contents = require("../models/Contents");
 const Users = require("../models/User");
 const generateSlug = require("../utils/generateSlug");
 const generateRandomSlug = require("../utils/randomSlug");
+const giveAchievement = require("../helpers/giveAchievement");
 const dtos = require("../utils/dtos/index");
 const controller = {
-  async getPublishedPosts(req, res) {
+  async getPublishedPosts(req, res, next) {
     const { page, limit, category, type, slug } = req.query;
     const userIP =
       req.headers["x-forwarded-for"] || req.connection.remoteAddress;
@@ -15,8 +16,11 @@ const controller = {
     const skip = (pageNumber - 1) * limitNumber;
     const query = {
       status: "Published",
-      type,
     };
+
+    if(type) {
+      query.type = type;
+    }
 
     if (category) {
       query.category = category;
@@ -337,6 +341,44 @@ const controller = {
       console.log(error);
       res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
     }
+  },
+
+  async getBySlug(req, res) {
+
+    const { slug } = req.params;
+    try {
+      const post = await Contents.findOne({ slug })
+        .populate("userID", "name lastname username")
+        .populate("category", "name");
+      if (!post) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
+
+      if(post.uniqueViewCount && post.uniqueViewCount.length > 500){
+
+        giveAchievement(
+          "basarili-uye",
+          post.userID,
+        )
+
+    /*     if(gainedAchievement){
+          const notification = await Notifications.create({
+            userID: post.userID,
+            message: `Tebrikler! Başarılı Üye başarımını kazandınız.`,
+            link: `/profil/${post.userID.username}`,
+            type: "achievement",
+          });
+          await notification.save();
+        } */
+
+      }
+
+      res.status(200).send(dtos.contentDto(post));
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerik getirilirken bir hata meydana geldi.");
+    }
+
   },
 };
 module.exports = controller;

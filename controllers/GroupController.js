@@ -3,6 +3,7 @@ const Groups = require("../models/Groups");
 const Users = require("../models/User");
 const GroupComments = require("../models/GroupComments");
 const GroupPosts = require("../models/GroupPosts");
+const giveAchievement = require("../helpers/giveAchievement");
 const generateSlug = require("../utils/generateSlug");
 const controller = {
   async createGroup(req, res, next) {
@@ -76,6 +77,7 @@ const controller = {
 
       await Groups.create(newGroup)
         .then(async (result) => {
+          await giveAchievement("sosyal-uye", _id);
           res.status(201).send({
             message: "Grup başarıyla oluşturuldu.",
             result,
