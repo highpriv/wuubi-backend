@@ -13,10 +13,8 @@ const multerMiddleware = (req, res, next) => {
       return res.status(500).json({ error: "Sunucu hatası" });
     }
 
-    const thumbnailFile = req.files["thumbnail"]
-      ? req.files["thumbnail"][0]
-      : null;
-    const coverFile = req.files["cover"] ? req.files["cover"][0] : null;
+    const thumbnailFile = req.files && req.files["thumbnail"] ? req.files["thumbnail"][0] : null;
+    const coverFile = req.files && req.files["cover"] ? req.files["cover"][0] : null;
 
     req.body.thumbnail = thumbnailFile;
     req.body.cover = coverFile;

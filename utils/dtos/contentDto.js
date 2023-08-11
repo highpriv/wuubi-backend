@@ -12,6 +12,8 @@ const contentDto = (contentParam) => {
     userID,
     status,
     createdAt,
+    likedBy,
+    savedBy,
     updatedAt,
   } = contentParam;
   return {
@@ -27,6 +29,8 @@ const contentDto = (contentParam) => {
     userID,
     status,
     createdAt,
+    likedBy,
+    savedBy,
     updatedAt,
   };
 };

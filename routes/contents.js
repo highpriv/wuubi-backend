@@ -27,4 +27,16 @@ router.get(
 
 router.get("/featured-posts", PostController.getFeaturedPosts);
 
+router.post(
+  "/posts/action/:slug",
+  Middlewares.authenticateMiddleware,
+  PostController.contentActionHandler
+);
+
+router.get(
+  "/get-saved-posts",
+  [Middlewares.authenticateMiddleware],
+  PostController.getSavedContents
+);
+
 module.exports = router;

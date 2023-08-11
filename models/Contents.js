@@ -79,7 +79,18 @@ const ContentSchema = new Schema(
       type: Number,
       default: 0,
     },
-
+    likedBy: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
+    savedBy: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
     uniqueViewCount: [
       {
         type: String,
@@ -130,5 +141,5 @@ ContentSchema.virtual("user", {
   foreignField: "id",
   justOne: true,
 });
-const Content = mongoose.model("Content", ContentSchema);
-module.exports = Content;
+const Contents = mongoose.model("Contents", ContentSchema, "contents");
+module.exports = Contents;

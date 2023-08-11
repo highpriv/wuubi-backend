@@ -18,7 +18,7 @@ const controller = {
       status: "Published",
     };
 
-    if(type) {
+    if (type) {
       query.type = type;
     }
 
@@ -344,7 +344,6 @@ const controller = {
   },
 
   async getBySlug(req, res) {
-
     const { slug } = req.params;
     try {
       const post = await Contents.findOne({ slug })
@@ -354,14 +353,10 @@ const controller = {
         return res.status(404).send("İçerik bulunamadı.");
       }
 
-      if(post.uniqueViewCount && post.uniqueViewCount.length > 500){
+      if (post.uniqueViewCount && post.uniqueViewCount.length > 500) {
+        giveAchievement("basarili-uye", post.userID);
 
-        giveAchievement(
-          "basarili-uye",
-          post.userID,
-        )
-
-    /*     if(gainedAchievement){
+        /*     if(gainedAchievement){
           const notification = await Notifications.create({
             userID: post.userID,
             message: `Tebrikler! Başarılı Üye başarımını kazandınız.`,
@@ -370,7 +365,6 @@ const controller = {
           });
           await notification.save();
         } */
-
       }
 
       res.status(200).send(dtos.contentDto(post));
@@ -378,7 +372,79 @@ const controller = {
       console.log(error);
       res.status(400).send("İçerik getirilirken bir hata meydana geldi.");
     }
+  },
 
+  async contentActionHandler(req, res) {
+    const { slug } = req.params;
+
+    const { action } = req.body;
+
+    const { _id } = req.user;
+
+    try {
+      const findPost = await Contents.findOne({ slug }).populate(
+        "userID",
+        "name lastname username"
+      );
+      if (!findPost) {
+        return res.status(404).json({ error: "İçerik bulunamadı." });
+      }
+
+      switch (action) {
+        case "like":
+          if (findPost.likedBy.includes(_id)) {
+            findPost.likedBy = findPost.likedBy.filter(
+              (id) => id.toString() !== _id
+            );
+          } else {
+            findPost.likedBy.push(_id);
+          }
+          break;
+        case "bookmark":
+          if (findPost.savedBy.includes(_id)) {
+            findPost.savedBy = findPost.savedBy.filter(
+              (id) => id.toString() !== _id
+            );
+          } else {
+            findPost.savedBy.push(_id);
+          }
+          break;
+        default:
+          break;
+      }
+
+      await findPost.save();
+
+      res.status(200).json({ message: "İçerik güncellendi.", post: findPost });
+    } catch (err) {
+      return res.status(500).json({ error: "Bir hata oluştu." });
+    }
+  },
+
+  async getSavedContents(req, res) {
+    const { _id } = req.user;
+    const { page } = req.query;
+    const limit = 10;
+
+    try {
+      const savedContents = await Contents.find({
+        savedBy: _id,
+        status: "Published",
+      })
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate("userID", "name lastname username");
+
+      if (!savedContents || savedContents.length === 0) {
+        return res.status(404).send("İçerik bulunamadı.");
+      }
+      res.status(200).send(savedContents.map((post) => dtos.contentDto(post)));
+    } catch (error) {
+      console.log(error);
+      res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
+    }
   },
 };
+
 module.exports = controller;

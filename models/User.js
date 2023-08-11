@@ -54,12 +54,50 @@ const userSchema = new mongoose.Schema(
         ref: "Achievements",
       },
     ], 
+
     joinedGroups: [
       {
         type: ObjectId,
         ref: "Groups",
       }
     ],
+
+    publications: [
+      {
+        type: ObjectId,
+        ref: "ProfilePosts",
+      }
+    ],
+
+    userFollowers: [
+      {
+        type: ObjectId,
+        ref: "User",
+      },
+    ],
+
+    following: [
+      {
+        type: ObjectId,
+        ref: "User",
+      }
+    ],
+
+    bio: {
+      type: String,
+      required: false,
+      default: "",
+    },
+    profilePhoto: {
+      type: String,
+      required: false,
+      default: "",
+    },
+    coverPhoto: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   {
     timestamps: true,
@@ -68,18 +106,6 @@ const userSchema = new mongoose.Schema(
     toJSON: { virtuals: true },
   }
 );
-
-/* userSchema.virtual("contents", {
-  ref: "Contents",
-  localField: "_id",
-  foreignField: "userID",
-});
-
-userSchema.virtual("profileContents", {
-    ref: "ProfileContents",
-    localField: "_id",
-    foreignField: "userID",
-  }); */
 
 userSchema.virtual("groups", {
   ref: "Groups",
@@ -92,6 +118,14 @@ userSchema.virtual("achievements", {
   localField: "achievement",
   foreignField: "_id",
 });
+
+
+userSchema.virtual("createdContents", {
+  ref: "Contents",
+  localField: "_id",
+  foreignField: "userID",
+});
+
 
 userSchema.pre("save", async function (next) {
   const user = this;
