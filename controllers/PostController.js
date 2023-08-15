@@ -366,7 +366,6 @@ const controller = {
           await notification.save();
         } */
       }
-
       res.status(200).send(dtos.contentDto(post));
     } catch (error) {
       console.log(error);
@@ -443,6 +442,71 @@ const controller = {
     } catch (error) {
       console.log(error);
       res.status(400).send("İçerikler getirilirken bir hata meydana geldi.");
+    }
+  },
+
+  async voteOption(req, res) {
+    const { slug } = req.params;
+
+    const { optionIndex, questionIndex } = req.body;
+
+    const { _id } = req.user;
+
+    try {
+      const findPost = await Contents.findOne({ slug }).populate(
+        "userID",
+        "name lastname username"
+      );
+      if (!findPost) {
+        return res.status(404).json({ error: "İçerik bulunamadı." });
+      }
+
+      const isVoted = findPost.pollContent[Number(questionIndex)].options.filter(
+        (option) => option.votedBy.includes(_id)
+      )
+
+      if (findPost.pollContent && findPost.pollContent.length > 0) {
+        const findOption =
+          findPost.pollContent[Number(questionIndex)].options[
+            Number(optionIndex)
+          ];
+
+        if (findOption) {
+          if (isVoted && isVoted?.length > 0) {
+            return res.status(400).json({ error: "Zaten oy kullandınız." });
+          } else {
+            findOption.votedBy.push(_id);
+          }
+
+          findPost.pollContent.map((i) => {
+            const totalVote = i.options.reduce(
+              (a, b) => a + b.votedBy.length,
+              0
+            );
+
+            i.options.map((j) => {
+              j.percentage = Math.round((j.votedBy.length * 100) / totalVote);
+              return j;
+            });
+          });
+
+          await Contents.updateOne(
+            { slug },
+            { pollContent: findPost.pollContent }
+          );
+
+          return res.status(200).json({
+            message: "Seçenek güncellendi.",
+            post: findPost,
+          });
+        } else {
+          return res.status(404).json({ error: "Seçenek bulunamadı." });
+        }
+      } else {
+        return res.status(404).json({ error: "Anket bulunamadı." });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: "Bir hata oluştu." });
     }
   },
 };

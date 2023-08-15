@@ -15,6 +15,10 @@ const contentDto = (contentParam) => {
     likedBy,
     savedBy,
     updatedAt,
+    listContent,
+    pollContent,
+    quizContent,
+    testContent
   } = contentParam;
   return {
     _id,
@@ -32,6 +36,10 @@ const contentDto = (contentParam) => {
     likedBy,
     savedBy,
     updatedAt,
+    listContent,
+    pollContent,
+    quizContent,
+    testContent
   };
 };
 

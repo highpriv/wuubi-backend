@@ -39,4 +39,10 @@ router.get(
   PostController.getSavedContents
 );
 
+router.post(
+  "/vote-option/:slug",
+  [Middlewares.authenticateMiddleware],
+  PostController.voteOption
+)
+
 module.exports = router;
