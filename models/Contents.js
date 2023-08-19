@@ -103,6 +103,8 @@ const ContentSchema = new Schema(
       },
     ],
 
+    hashtags: [String],
+
     userID: {
       type: ObjectId,
       ref: "User",

@@ -18,7 +18,8 @@ const contentDto = (contentParam) => {
     listContent,
     pollContent,
     quizContent,
-    testContent
+    testContent,
+    hashtags
   } = contentParam;
   return {
     _id,
@@ -39,7 +40,8 @@ const contentDto = (contentParam) => {
     listContent,
     pollContent,
     quizContent,
-    testContent
+    testContent,
+    hashtags
   };
 };
 

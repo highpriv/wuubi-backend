@@ -2,6 +2,7 @@ const { uploadImageToS3 } = require("../services/uploadService");
 const Contents = require("../models/Contents");
 const Users = require("../models/User");
 const generateSlug = require("../utils/generateSlug");
+const parseHashtags = require("../utils/hashtagParser");
 const generateRandomSlug = require("../utils/randomSlug");
 const giveAchievement = require("../helpers/giveAchievement");
 const dtos = require("../utils/dtos/index");
@@ -137,6 +138,7 @@ const controller = {
         }
       });
     }
+    const hashtags = parseHashtags(content);
 
     let newPost = {
       title,
@@ -151,12 +153,15 @@ const controller = {
       type,
       userID: _id,
       status: "Pending",
+      hashtags,
     };
 
     try {
       if (req.files && req.files["thumbnail"]) {
         newPost.thumbnail = await uploadImageToS3(req.files["thumbnail"][0]);
       }
+
+
 
       await Contents.create(newPost)
         .then(async (result) => {
